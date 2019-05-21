@@ -181,11 +181,6 @@ extension TodoViewController: UITableViewDelegate {
         return false
     }
 
-//    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
-//        return UITableViewCellEditingStyle.init(rawValue: UITableViewCellEditingStyle.insert.rawValue | UITableViewCellEditingStyle.delete.rawValue)!
-//        //return .none
-//    }
-
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
 
         let delete = UITableViewRowAction(style: .destructive, title: "Delete") { [weak self] action, indexPath in

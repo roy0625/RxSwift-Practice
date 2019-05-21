@@ -122,11 +122,13 @@ struct TodoViewModel: TodoViewModelType,
         var model = data.value
 
         if indexPath.section == TodoItemType.done.rawValue {
-            let todoModel = model.done[indexPath.row]
+            var todoModel = model.done[indexPath.row]
+            todoModel.isDone = false
             model.done.remove(at: indexPath.row)
             model.todo.append(todoModel)
         } else {
-            let todoModel = model.todo[indexPath.row]
+            var todoModel = model.todo[indexPath.row]
+            todoModel.isDone = true
             model.todo.remove(at: indexPath.row)
             model.done.append(todoModel)
         }

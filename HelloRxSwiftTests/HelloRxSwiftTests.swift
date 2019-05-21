@@ -52,6 +52,31 @@ class HelloRxSwiftTests: XCTestCase {
         XCTAssertEqual(try itemObservable.toBlocking(timeout: 1.0).first(), result)
     }
 
+    func testRemoveItem() {
+        let itemObservable = viewModel.todoItems.asObservable().subscribeOn(scheduler)
+
+        viewModel.addItemTrigger.onNext("Hello")
+        let indexPath = IndexPath(row: 0, section: 0)
+        viewModel.deleteItemTrigger.onNext(indexPath)
+
+        let result = TodoListModel()
+
+        XCTAssertEqual(try itemObservable.toBlocking(timeout: 1.0).first(), result)
+    }
+
+    func testSwitchItemStatus() {
+        let itemObservable = viewModel.todoItems.asObservable().subscribeOn(scheduler)
+
+        viewModel.addItemTrigger.onNext("Hello")
+        let indexPath = IndexPath(row: 0, section: 0)
+        viewModel.switchItemTrigger.onNext(indexPath)
+
+        var result = TodoListModel()
+        result.done.append(TodoModel(name: "Hello", isDone: true, time: 0))
+
+        XCTAssertEqual(try itemObservable.toBlocking(timeout: 1.0).first(), result)
+    }
+
     func testRemoveAllItem() {
         let itemObservable = viewModel.todoItems.asObservable().subscribeOn(scheduler)
 
