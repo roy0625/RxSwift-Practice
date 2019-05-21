@@ -7,28 +7,58 @@
 //
 
 import XCTest
+import RxSwift
+import RxTest
+import RxBlocking
 @testable import HelloRxSwift
 
 class HelloRxSwiftTests: XCTestCase {
+    var scheduler: ConcurrentDispatchQueueScheduler!
+    var viewModel: TodoViewModel!
+    var subscription: Disposable!
 
-    override func setUp() {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-    }
+    class FileManager: FileDataManagerSyncActions {
+        private var items = TodoListModel()
+        func writeDataToFile(todos: TodoListModel) {
+            items = todos
+        }
 
-    override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
+        func getDataFromFile() -> Observable<TodoListModel> {
+            return Observable.just(items)
+        }
 
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+        func removeFile() {
+            items = TodoListModel()
         }
     }
 
+    override func setUp() {
+        viewModel = TodoViewModel(fileDataManager: FileManager())
+        scheduler = ConcurrentDispatchQueueScheduler(qos: .default)
+    }
+
+    override func tearDown() {
+        super.tearDown()
+    }
+
+    func testAddItem() {
+        let itemObservable = viewModel.todoItems.asObservable().subscribeOn(scheduler)
+
+        viewModel.addItemTrigger.onNext("Hello")
+
+        var result = TodoListModel()
+        result.todo.append(TodoModel(name: "Hello", isDone: false, time: 0))
+
+        XCTAssertEqual(try itemObservable.toBlocking(timeout: 1.0).first(), result)
+    }
+
+    func testRemoveAllItem() {
+        let itemObservable = viewModel.todoItems.asObservable().subscribeOn(scheduler)
+
+        viewModel.deleteAllItemTrigger.onNext(())
+
+        let result = TodoListModel()
+
+        XCTAssertEqual(try itemObservable.toBlocking(timeout: 1.0).first(), result)
+    }
 }

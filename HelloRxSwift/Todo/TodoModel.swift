@@ -13,9 +13,15 @@ enum TodoItemType: Int {
     case done = 1
 }
 
-struct TodoListModel: Codable {
+struct TodoListModel: Codable, Equatable {
+
     var todo: [TodoModel]
     var done: [TodoModel]
+
+    // Equatable
+    static func == (lhs: TodoListModel, rhs: TodoListModel) -> Bool {
+        return lhs.todo == rhs.todo && lhs.done == rhs.done
+    }
 
     init() {
         self.todo = []
@@ -23,7 +29,7 @@ struct TodoListModel: Codable {
     }
 }
 
-struct TodoModel : Codable {
+struct TodoModel : Codable, Equatable {
     var name: String
     var isDone: Bool
     var time: Int
