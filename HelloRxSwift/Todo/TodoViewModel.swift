@@ -42,6 +42,8 @@ struct TodoViewModel: TodoViewModelType,
     let refreshTrigger = PublishSubject<Void>()
     let addItemTrigger = PublishSubject<String>()
     let deleteAllItemTrigger = PublishSubject<Void>()
+    let deleteItemTrigger = PublishSubject<IndexPath>()
+    let switchItemTrigger = PublishSubject<IndexPath>()
 
     // MARK: Output
     var todoItems: Observable<TodoListModel> {
@@ -73,6 +75,20 @@ struct TodoViewModel: TodoViewModelType,
             .bind(to: refreshTrigger)
             .disposed(by: disposeBag)
 
+        deleteItemTrigger
+            .subscribe(onNext: { indexPath in
+                self.removeItem(indexPath: indexPath)
+                self.refreshTrigger.onNext(())
+            })
+            .disposed(by: disposeBag)
+
+        switchItemTrigger
+            .subscribe(onNext: { indexPath in
+                self.switchItemDoneStatus(indexPath: indexPath)
+                self.refreshTrigger.onNext(())
+            })
+            .disposed(by: disposeBag)
+
         let refreshObservable = refreshTrigger.asObserver().map { $0 as AnyObject }
         let addItemObservable = addItemTrigger.asObserver().map { $0 as AnyObject }
         _ = Observable.of(refreshObservable, addItemObservable)
@@ -88,6 +104,32 @@ struct TodoViewModel: TodoViewModelType,
         let item = TodoModel(name: name, isDone: false, time: 0)
         var model = data.value
         model.todo.append(item)
+        fileDataManager.writeDataToFile(todos: model)
+    }
+
+    func removeItem(indexPath: IndexPath) {
+        var model = data.value
+        if indexPath.section == TodoItemType.done.rawValue {
+            model.done.remove(at: indexPath.row)
+        } else {
+            model.todo.remove(at: indexPath.row)
+        }
+        fileDataManager.writeDataToFile(todos: model)
+    }
+
+    func switchItemDoneStatus(indexPath: IndexPath) {
+
+        var model = data.value
+
+        if indexPath.section == TodoItemType.done.rawValue {
+            let todoModel = model.done[indexPath.row]
+            model.done.remove(at: indexPath.row)
+            model.todo.append(todoModel)
+        } else {
+            let todoModel = model.todo[indexPath.row]
+            model.todo.remove(at: indexPath.row)
+            model.done.append(todoModel)
+        }
         fileDataManager.writeDataToFile(todos: model)
     }
 }

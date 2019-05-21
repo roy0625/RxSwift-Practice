@@ -21,6 +21,7 @@ class TodoViewController: UIViewController {
     private let tableView = UITableView()
     private let deleteButton = UIButton(type: .custom)
     private var rightButton: UIBarButtonItem?
+    private var leftButton: UIBarButtonItem?
 
     init(viewModel: TodoViewModel) {
         self.viewModel = viewModel
@@ -38,7 +39,7 @@ class TodoViewController: UIViewController {
         navigationItem.largeTitleDisplayMode = .always
         navigationController?.navigationBar.prefersLargeTitles = true
 
-        addRightButton()
+        addNavButton()
         setupViews()
         bindViewModel()
         bindTableView()
@@ -79,9 +80,12 @@ class TodoViewController: UIViewController {
         }
     }
 
-    private func addRightButton() {
+    private func addNavButton() {
         rightButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: nil)
         navigationItem.rightBarButtonItem = rightButton
+
+        leftButton = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: nil)
+        navigationItem.leftBarButtonItem = leftButton
     }
 
     private func bindViewModel() {
@@ -104,6 +108,13 @@ class TodoViewController: UIViewController {
             })
             .disposed(by: disposeBag)
 
+        leftButton?.rx.tap
+            .subscribe(onNext: { [weak self] _ in
+                guard let self = self else { return }
+                self.tableView.isEditing = !self.tableView.isEditing
+            })
+            .disposed(by: disposeBag)
+
         deleteButton.rx.tap
             .subscribe({ _ in
                 inputs.deleteAllItemTrigger.onNext(())
@@ -118,10 +129,25 @@ class TodoViewController: UIViewController {
             }
             cell.textLabel?.text = element.name
             return cell
+        }, titleForHeaderInSection: { (dataSource, index) in
+
+            if index == TodoItemType.todo.rawValue {
+                return "To Do"
+            } else {
+                return "Done"
+            }
         })
+
+        dataSource.canEditRowAtIndexPath = { dataSource, indexPath in
+            return true
+        }
 
         sections
             .bind(to: tableView.rx.items(dataSource: dataSource))
+            .disposed(by: disposeBag)
+
+        tableView.rx
+            .setDelegate(self)
             .disposed(by: disposeBag)
     }
 
@@ -146,6 +172,34 @@ class TodoViewController: UIViewController {
         present(alert, animated: true, completion: {
             print("alert complete")
         })
+    }
+}
+
+extension TodoViewController: UITableViewDelegate {
+
+    func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool {
+        return false
+    }
+
+//    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+//        return UITableViewCellEditingStyle.init(rawValue: UITableViewCellEditingStyle.insert.rawValue | UITableViewCellEditingStyle.delete.rawValue)!
+//        //return .none
+//    }
+
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
+
+        let delete = UITableViewRowAction(style: .destructive, title: "Delete") { [weak self] action, indexPath in
+            self?.viewModel.deleteItemTrigger.onNext(indexPath)
+        }
+
+        var switchString = "Done"
+        if indexPath.section == TodoItemType.done.rawValue {
+            switchString = "To Do"
+        }
+        let switchStatus = UITableViewRowAction(style: .normal, title: switchString) { [weak self] action, indexPath in
+            self?.viewModel.switchItemTrigger.onNext(indexPath)
+        }
+        return [delete, switchStatus]
     }
 }
 
