@@ -199,9 +199,9 @@
 			isa = PBXGroup;
 			children = (
 				B05685862289146400195089 /* TodoViewController.swift */,
+				B05685CB2292493C00195089 /* TodoViewModel.swift */,
 				B05685C6229246BA00195089 /* TodoModel.swift */,
 				B05685C92292492E00195089 /* TodoCoordinator.swift */,
-				B05685CB2292493C00195089 /* TodoViewModel.swift */,
 			);
 			path = Todo;
 			sourceTree = "<group>";

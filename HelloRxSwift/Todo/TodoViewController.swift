@@ -43,13 +43,6 @@ class TodoViewController: UIViewController {
         setupViews()
         bindViewModel()
         bindTableView()
-
-        let observable = Observable<Any>.never()
-
-        observable
-            .debug()
-            .subscribe { print("Hi") }
-            .disposed(by: disposeBag)
     }
 
     override func viewWillAppear(_ animated: Bool) {

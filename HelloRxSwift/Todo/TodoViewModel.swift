@@ -69,33 +69,32 @@ struct TodoViewModel: TodoViewModelType,
             .disposed(by: disposeBag)
 
         deleteAllItemTrigger
-            .do(onNext: { _ in
+            .subscribe(onNext: { _ in
                 self.fileDataManager.removeFile()
             })
-            .bind(to: refreshTrigger)
             .disposed(by: disposeBag)
 
         deleteItemTrigger
             .subscribe(onNext: { indexPath in
                 self.removeItem(indexPath: indexPath)
-                self.refreshTrigger.onNext(())
             })
             .disposed(by: disposeBag)
 
         switchItemTrigger
             .subscribe(onNext: { indexPath in
                 self.switchItemDoneStatus(indexPath: indexPath)
-                self.refreshTrigger.onNext(())
             })
             .disposed(by: disposeBag)
 
-        let refreshObservable = refreshTrigger.asObserver().map { $0 as AnyObject }
-        let addItemObservable = addItemTrigger.asObserver().map { $0 as AnyObject }
-        _ = Observable.of(refreshObservable, addItemObservable)
-            .merge()
-            .flatMap { _ -> Observable<TodoListModel> in
-                return self.fileDataManager.getDataFromFile()
-            }
+        Observable.merge(deleteAllItemTrigger,
+                         deleteItemTrigger.map { _ in () },
+                         switchItemTrigger.map { _ in () },
+                         addItemTrigger.map { _ in () })
+            .bind(to: refreshTrigger)
+            .disposed(by: disposeBag)
+
+        refreshTrigger
+            .flatMap { self.fileDataManager.getDataFromFile() }
             .bind(to: data)
             .disposed(by: disposeBag)
     }
